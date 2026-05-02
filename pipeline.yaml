@@ -1,0 +1,22 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: tax-calculator-pipeline
+spec:
+  params:
+    - name: image
+      default: us.icr.io/sn-labs-panchami/tax-calculator:latest
+  tasks:
+    - name: npminstall
+      taskRef:
+        name: run-npm
+    - name: tests
+      taskRef:
+        name: run-jasmine
+      runAfter:
+        - npminstall
+    - name: build
+      taskRef:
+        name: build-image
+      runAfter:
+        - tests
