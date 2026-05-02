@@ -1,3 +1,4 @@
+# pipeline.yaml
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
@@ -5,18 +6,37 @@ metadata:
 spec:
   params:
     - name: image
+      type: string
+      description: Docker image to build and push
       default: us.icr.io/sn-labs-panchami/tax-calculator:latest
+
   tasks:
     - name: npminstall
       taskRef:
         name: run-npm
+      workspaces:
+        - name: source
+          workspace: git-source
+
     - name: tests
       taskRef:
         name: run-jasmine
       runAfter:
         - npminstall
+      workspaces:
+        - name: source
+          workspace: git-source
+
     - name: build
       taskRef:
         name: build-image
       runAfter:
         - tests
+      params:
+        - name: IMAGE
+          value: $(params.image)
+      workspaces:
+        - name: source
+          workspace: git-source
+        - name: dockerconfig
+          workspace: docker-registry
